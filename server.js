@@ -43,6 +43,10 @@ app.post('/login', async (req, res) => {
     return res.redirect('/notary');
 });
 
+app.get('/', (req, res) => {
+    return res.sendFile(__dirname + '/views/home.html');
+});
+
 app.listen(3000, async () => {
     await mongoose.connect(process.env.MONGO_URI);
 });
