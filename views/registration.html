@@ -1,0 +1,118 @@
+<!-- not safe for production and doesn't exist in real life -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Registration Page</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f3f4f6;
+      --primary: #4f46e5;
+      --secondary: #6366f1;
+      --accent: #a5b4fc;
+      --text: #111827;
+      --card-bg: #ffffff;
+      --shadow: rgba(0, 0, 0, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      color: var(--text);
+    }
+
+    .register-container {
+      background-color: var(--card-bg);
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 10px 25px var(--shadow);
+      width: 320px;
+    }
+
+    .register-container h2 {
+      text-align: center;
+      margin-bottom: 25px;
+      color: var(--primary);
+      font-family: 'Raleway', sans-serif;
+    }
+
+    input[type="email"],
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 12px 15px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      transition: border-color 0.3s ease;
+    }
+
+    input:focus {
+      border-color: var(--primary);
+      outline: none;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      background-color: var(--primary);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 15px;
+      transition: background-color 0.3s ease;
+    }
+
+    .btn:hover {
+      background-color: var(--secondary);
+    }
+
+    .login-link {
+      text-align: center;
+      margin-top: 15px;
+      color: var(--primary);
+      font-size: 14px;
+    }
+
+    .login-link a {
+      color: var(--secondary);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .login-link a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="register-container">
+    <h2>Create Account</h2>
+    <form action="/register" method="post">
+      <input type="email" name="email" placeholder="Email" required>
+      <input type="text" name="userId" placeholder="User ID" required>
+      <input type="password" name="password" placeholder="Password" required>
+      <button type="submit" class="btn">Register</button>
+    </form>
+    <div class="login-link">
+      Already have an account? <a href="/login">Login</a>
+    </div>
+  </div>
+</body>
+
+</html>
