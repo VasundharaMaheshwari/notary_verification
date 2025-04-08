@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload & Blockchain Notarization</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Raleway:wght@700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f3f4f6;
+            --primary: #4f46e5;
+            --secondary: #6366f1;
+            --accent: #a5b4fc;
+            --text: #111827;
+            --card-bg: #ffffff;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 2rem;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            font-family: 'Raleway', sans-serif;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px var(--shadow);
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        input[type="file"] {
+            padding: 0.5rem;
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: var(--secondary);
+        }
+
+        button:disabled {
+            background-color: #c7d2fe;
+            cursor: not-allowed;
+        }
+
+        #output {
+            display: none;
+            /* Hidden by default */
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: var(--accent);
+            color: #1e3a8a;
+            border-radius: 0.75rem;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Blockchain File Notarization</h1>
+    <div class="card">
+        <input type="file" id="fileInput" />
+        <button id="connectButton">🔌 Connect to MetaMask</button>
+        <button id="uploadButton" disabled>⬆️ Upload and Hash</button>
+        <button id="verifyButton" disabled>🔍 Verify Hash</button>
+        <div id="output"></div>
+    </div>
+    <script>
+        const { ethers } = window;
+
+        let provider;
+        let signer;
+        const contractAddress = ""; // Replace with your contract address
+        const contractABI = [];
+
+        let userAccount;
+
+        // ✅ Connect to MetaMask
+        document.getElementById('connectButton').onclick = async () => {
+            if (window.ethereum) {
+                try {
+                    const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+                    userAccount = accounts[0]; // Get first MetaMask account
+                    provider = new ethers.BrowserProvider(window.ethereum);
+                    signer = await provider.getSigner(); // Get signer from MetaMask
+
+                    console.log("Connected to MetaMask:", userAccount);
+                    document.getElementById('uploadButton').disabled = false;
+                    document.getElementById('verifyButton').disabled = false;
+                } catch (error) {
+                    console.error("MetaMask connection error:", error);
+                }
+            } else {
+                alert("MetaMask not detected. Please install MetaMask.");
+            }
+        };
+
+        // ✅ Upload and hash the file
+        document.getElementById('uploadButton').onclick = async () => {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    const fileBuffer = new Uint8Array(event.target.result);
+                    const hash = ethers.keccak256(fileBuffer); // Hash file data
+                    console.log("File Hash:", hash);
+                    await uploadToBlockchain(hash);
+                };
+                reader.readAsArrayBuffer(file);
+            } else {
+                alert("Please select a file to upload.");
+            }
+        };
+
+        // ✅ Upload the hash to the blockchain
+        async function uploadToBlockchain(hash) {
+            if (!signer) {
+                console.error("No signer found. Please connect MetaMask.");
+                return;
+            }
+
+            const contract = new ethers.Contract(contractAddress, contractABI, signer);
+
+            try {
+                const tx = await contract.notarizeDocument(hash, userAccount);
+                await tx.wait();
+                document.getElementById('output').innerText = `✅ Hash stored: ${hash}`;
+                document.getElementById('output').style.display = 'block';
+            } catch (error) {
+                document.getElementById('output').innerText = "❌ Failed to upload hash.";
+                document.getElementById('output').style.display = 'block';
+            }
+        }
+
+        // ✅ Verify the hash
+        document.getElementById('verifyButton').onclick = async () => {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    const fileBuffer = new Uint8Array(event.target.result);
+                    const hash = ethers.keccak256(fileBuffer);
+                    console.log("Verifying Hash:", hash);
+                    await verifyHash(hash);
+                };
+                reader.readAsArrayBuffer(file);
+            } else {
+                alert("Please select a file to verify.");
+            }
+        };
+
+        // ✅ Verify hash from blockchain
+        async function verifyHash(hash) {
+            if (!provider) {
+                console.error("No provider found. Please connect MetaMask.");
+                return;
+            }
+
+            const contract = new ethers.Contract(contractAddress, contractABI, provider);
+
+            try {
+                const [notary, timestamp] = await contract.getDocumentDetails(hash);
+                if (notary !== ethers.ZeroAddress) {
+                    document.getElementById('output').innerText = `✅ Hash verified!\nNotary: ${notary}\nTimestamp: ${new Date(Number(timestamp) * 1000).toLocaleString()}`;
+                    document.getElementById('output').style.display = 'block';
+                } else {
+                    document.getElementById('output').innerText = "❌ Verification error.";
+                    document.getElementById('output').style.display = 'block';
+                }
+            } catch (error) {
+                document.getElementById('output').innerText = "⚠️ Hash not found on blockchain.";
+                document.getElementById('output').style.display = 'block';
+            }
+        }
+
+    </script>
+</body>
+
+</html>
